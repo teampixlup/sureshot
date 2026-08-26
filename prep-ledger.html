@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prep Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EEE3;
+    --paper-dark:#E7DFC9;
+    --ink:#23303B;
+    --ink-soft:#5B6873;
+    --red:#B23A2E;
+    --red-soft:#F1DAD5;
+    --green:#3F7859;
+    --green-soft:#DCE7DD;
+    --gold:#A9812F;
+    --line:rgba(35,48,59,0.14);
+    --card:#FBF8F1;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:linear-gradient(var(--line) 1px, transparent 1px);
+    background-size:100% 2.1em;
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 40px;}
+
+  header.top{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:10px;
+  }
+  .brand{display:flex;flex-direction:column;}
+  .brand .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:2px;}
+  .brand h1{font-family:'Fraunces',serif;font-weight:700;font-size:32px;margin:0;letter-spacing:-0.01em;}
+  .brand h1 em{font-style:italic;color:var(--gold);}
+  .reset-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 10px;border-radius:3px;cursor:pointer;letter-spacing:.04em;}
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+  .reset-btn.confirming{background:var(--red);color:#fff;border-color:var(--red);}
+
+  .status{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);min-height:16px;margin-bottom:14px;}
+
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ink);border:1px solid var(--ink);margin-bottom:26px;font-family:'IBM Plex Mono',monospace;}
+  .summary .cell{background:var(--card);padding:12px 14px;}
+  .summary .cell .num{font-size:22px;font-weight:600;line-height:1;}
+  .summary .cell .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-soft);margin-top:5px;}
+  .summary .cell.doubt .num{color:var(--red);}
+  .summary .cell.done .num{color:var(--green);}
+  @media (max-width:560px){ .summary{grid-template-columns:repeat(2,1fr);} }
+
+  .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:9px 16px;border:1px solid var(--ink);background:var(--paper-dark);color:var(--ink);cursor:pointer;border-radius:3px 3px 0 0;position:relative;top:1px;}
+  .tab.active{background:var(--card);border-bottom:1px solid var(--card);font-weight:600;color:var(--gold);}
+  .tab .count{color:var(--ink-soft);margin-left:6px;}
+
+  .panel{border:1px solid var(--ink);background:var(--card);padding:20px;border-radius:0 3px 3px 3px;}
+  .row-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .subject-title{font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:var(--ink-soft);}
+  .view-doubt-btn{background:var(--red);color:#fff;border:none;padding:8px 14px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;cursor:pointer;text-transform:uppercase;}
+  .view-doubt-btn:hover{background:#8f2e24;}
+
+  .add-form{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .add-form input[type="text"]{flex:1;min-width:160px;padding:10px 12px;border:1px solid var(--line);border-radius:3px;font-family:'IBM Plex Sans',sans-serif;font-size:14px;background:#fff;}
+  .add-form input:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold);}
+  .add-form button{background:var(--ink);color:var(--card);border:none;padding:10px 16px;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;}
+  .add-form button:hover{background:var(--gold);}
+
+  .chapter{border:1px solid var(--line);border-radius:4px;margin-bottom:12px;background:#fff;overflow:hidden;}
+  .chapter-head{display:flex;align-items:center;gap:12px;padding:13px 15px;cursor:pointer;user-select:none;}
+  .chapter-head:hover{background:var(--paper-dark);}
+  .caret{font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);width:14px;flex-shrink:0;transition:transform .15s;display:inline-block;}
+  .chapter.open .caret{transform:rotate(90deg);}
+  .chapter-name{font-family:'Fraunces',serif;font-weight:600;font-size:17px;flex:1;min-width:120px;}
+  .chapter-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .pill{padding:2px 8px;border-radius:20px;font-size:10px;letter-spacing:.03em;}
+  .pill.sheets{background:var(--paper-dark);}
+  .pill.doubt{background:var(--red-soft);color:var(--red);}
+  .del-chapter{background:none;border:1px solid transparent;color:var(--ink-soft);cursor:pointer;font-size:11px;padding:3px 7px;border-radius:3px;font-family:'IBM Plex Mono',monospace;}
+  .del-chapter:hover{color:var(--red);border-color:var(--red);}
+  .del-chapter.confirming{background:var(--red);color:#fff;}
+
+  .chapter-body{display:none;padding:0 15px 15px;border-top:1px dashed var(--line);}
+  .chapter.open .chapter-body{display:block;}
+
+  .sheet-add-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center;}
+  .sheet-add-row input[type="text"]{flex:1;min-width:140px;padding:9px 11px;border:1px solid var(--line);border-radius:3px;font-size:13px;background:#fff;}
+  .sheet-add-row label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+  .sheet-add-row button{background:var(--ink);color:var(--card);border:none;padding:9px 14px;border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;}
+  .sheet-add-row button:hover{background:var(--gold);}
+
+  .sheet{border:1px solid var(--line);border-radius:4px;margin-top:12px;background:var(--paper);}
+  .sheet-head{display:flex;align-items:center;gap:10px;padding:11px 12px;flex-wrap:wrap;}
+  .stamp{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:3px;border:1.5px dashed;transform:rotate(-3deg);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  .stamp.done{color:var(--green);border-color:var(--green);background:var(--green-soft);}
+  .stamp.pending{color:var(--ink-soft);border-color:var(--line);background:transparent;}
+  .sheet-name{flex:1;font-weight:600;font-size:14px;min-width:100px;}
+  .sheet-doubt-count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--red);flex-shrink:0;}
+  .sheet-toggle{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:13px;}
+  .del-sheet{background:none;border:1px solid transparent;color:var(--ink-soft);cursor:pointer;font-size:11px;padding:3px 7px;border-radius:3px;font-family:'IBM Plex Mono',monospace;}
+  .del-sheet:hover{color:var(--red);border-color:var(--red);}
+  .del-sheet.confirming{background:var(--red);color:#fff;}
+
+  .sheet-body{display:none;padding:0 12px 14px;border-top:1px solid var(--line);}
+  .sheet.open .sheet-body{display:block;}
+
+  .doubt-form{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+  .doubt-form input.qnum{width:64px;font-family:'IBM Plex Mono',monospace;text-align:center;}
+  .doubt-form input.qnote{flex:1;min-width:140px;}
+  .doubt-form input{padding:8px 10px;border:1px solid var(--line);border-radius:3px;font-size:13px;background:#fff;}
+  .doubt-form button{background:var(--red);color:#fff;border:none;padding:8px 12px;border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;}
+  .doubt-form button:hover{background:#8f2e24;}
+
+  .doubt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .chip{display:flex;align-items:center;gap:6px;background:var(--red-soft);color:var(--red);border:1px dashed var(--red);border-radius:3px;padding:4px 8px;font-size:12px;}
+  .chip .qn{font-family:'IBM Plex Mono',monospace;font-weight:700;}
+  .chip .note{color:var(--ink-soft);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chip button{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;line-height:1;padding:0;}
+
+  .empty{color:var(--ink-soft);font-size:13px;font-style:italic;padding:14px 2px;}
+
+  .overlay{display:none;position:fixed;inset:0;background:rgba(35,48,59,0.55);align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50;overflow-y:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--ink);border-radius:4px;max-width:640px;width:100%;padding:22px;}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .modal-head h2{font-family:'Fraunces',serif;font-size:22px;margin:0;}
+  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);}
+  .modal-group{margin-bottom:16px;}
+  .modal-group h3{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--gold);border-bottom:1px solid var(--line);padding-bottom:5px;margin:0 0 8px;}
+  .modal-sheet{margin-bottom:10px;}
+  .modal-sheet .sname{font-weight:600;font-size:13px;margin-bottom:4px;}
+
+  .loading{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);z-index:100;}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loadingScreen">loading ledger…</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">IPMAT Study Tracker</span>
+      <h1>Prep <em>Ledger</em></h1>
+    </div>
+    <button class="reset-btn" id="resetBtn">Clear all data</button>
+  </header>
+
+  <div class="status" id="statusLine"></div>
+
+  <div class="summary" id="summaryBar"></div>
+
+  <div class="tabs" id="subjectTabs"></div>
+
+  <div class="panel">
+    <div class="row-between">
+      <div class="subject-title" id="subjectTitle"></div>
+      <button class="view-doubt-btn" id="viewDoubtBtn">View doubtful questions</button>
+    </div>
+
+    <form class="add-form" id="addChapterForm">
+      <input type="text" id="newChapterInput" placeholder="New chapter name, e.g. Time Speed and Distance" maxlength="60" autocomplete="off">
+      <button type="submit">Add chapter</button>
+    </form>
+
+    <div id="chaptersList"></div>
+  </div>
+</div>
+
+<div class="overlay" id="doubtOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalSubjectName">Doubtful questions</h2>
+      <button class="modal-close" id="modalCloseBtn" type="button">&times;</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var SUBJECTS = [
+    {id:'quants', label:'Quants'},
+    {id:'dilr', label:'DILR'},
+    {id:'verbal', label:'Verbal Ability'}
+  ];
+  var STORAGE_KEY = 'prep-ledger-v2';
+
+  var state = null;
+  var currentSubject = 'quants';
+  var openChapters = {};
+  var openSheets = {};
+  var storageOK = true;
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  function defaultState(){
+    var s = {};
+    for(var i=0;i<SUBJECTS.length;i++){ s[SUBJECTS[i].id] = { chapters: [] }; }
+    return s;
+  }
+
+  function newChapter(name){ return { id: uid(), name: name, sheets: [] }; }
+  function newSheet(name, completed){ return { id: uid(), name: name, completed: !!completed, doubtful: [] }; }
+
+  function setStatus(msg){
+    var el = document.getElementById('statusLine');
+    if(el) el.textContent = msg || '';
+  }
+
+  function hasStorage(){
+    return typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+  }
+
+  function loadState(){
+    if(!hasStorage()){
+      storageOK = false;
+      state = defaultState();
+      return Promise.resolve();
+    }
+    return window.storage.get(STORAGE_KEY, false).then(function(res){
+      if(res && res.value){
+        try{
+          state = JSON.parse(res.value);
+          for(var i=0;i<SUBJECTS.length;i++){
+            if(!state[SUBJECTS[i].id]) state[SUBJECTS[i].id] = {chapters:[]};
+          }
+        }catch(e){
+          state = defaultState();
+        }
+      } else {
+        state = defaultState();
+      }
+    }).catch(function(){
+      state = defaultState();
+    });
+  }
+
+  function saveState(){
+    if(!hasStorage()){
+      storageOK = false;
+      setStatus('Working in this tab only — open this file inside Claude to keep data saved between visits.');
+      return;
+    }
+    window.storage.set(STORAGE_KEY, JSON.stringify(state), false).then(function(res){
+      if(!res){
+        setStatus('Could not save just now — your last change may not persist.');
+      } else {
+        setStatus('');
+      }
+    }).catch(function(){
+      setStatus('Could not save just now — your last change may not persist.');
+    });
+  }
+
+  function esc(str){
+    var d = document.createElement('div');
+    d.textContent = str === null || str === undefined ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  function subjectLabel(id){
+    for(var i=0;i<SUBJECTS.length;i++) if(SUBJECTS[i].id===id) return SUBJECTS[i].label;
+    return id;
+  }
+
+  function counts(subjId){
+    var subj = state[subjId];
+    var chapters = subj.chapters.length;
+    var sheets = 0, sheetsDone = 0, doubt = 0;
+    for(var i=0;i<subj.chapters.length;i++){
+      var c = subj.chapters[i];
+      sheets += c.sheets.length;
+      for(var j=0;j<c.sheets.length;j++){
+        if(c.sheets[j].completed) sheetsDone++;
+        doubt += c.sheets[j].doubtful.length;
+      }
+    }
+    return {chapters:chapters, sheets:sheets, sheetsDone:sheetsDone, doubt:doubt};
+  }
+
+  function overallCounts(){
+    var total = {chapters:0, sheets:0, sheetsDone:0, doubt:0};
+    for(var i=0;i<SUBJECTS.length;i++){
+      var c = counts(SUBJECTS[i].id);
+      total.chapters += c.chapters;
+      total.sheets += c.sheets;
+      total.sheetsDone += c.sheetsDone;
+      total.doubt += c.doubt;
+    }
+    return total;
+  }
+
+  function renderSummary(){
+    var t = overallCounts();
+    var el = document.getElementById('summaryBar');
+    el.innerHTML =
+      '<div class="cell"><div class="num">'+t.chapters+'</div><div class="lbl">Chapters logged</div></div>'+
+      '<div class="cell"><div class="num">'+t.sheets+'</div><div class="lbl">Sheets tracked</div></div>'+
+      '<div class="cell done"><div class="num">'+t.sheetsDone+'</div><div class="lbl">Sheets done</div></div>'+
+      '<div class="cell doubt"><div class="num">'+t.doubt+'</div><div class="lbl">Doubtful Qs</div></div>';
+  }
+
+  function renderTabs(){
+    var el = document.getElementById('subjectTabs');
+    el.innerHTML = '';
+    for(var i=0;i<SUBJECTS.length;i++){
+      (function(su){
+        var c = counts(su.id);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tab' + (su.id===currentSubject ? ' active' : '');
+        btn.innerHTML = esc(su.label) + '<span class="count">'+c.chapters+'</span>';
+        btn.addEventListener('click', function(){
+          currentSubject = su.id;
+          renderAll();
+        });
+        el.appendChild(btn);
+      })(SUBJECTS[i]);
+    }
+  }
+
+  function renderChapters(){
+    document.getElementById('subjectTitle').textContent = subjectLabel(currentSubject);
+    var list = document.getElementById('chaptersList');
+    list.innerHTML = '';
+    var subj = state[currentSubject];
+
+    if(subj.chapters.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'No chapters yet. Type a chapter name above and press Add chapter.';
+      list.appendChild(empty);
+      return;
+    }
+
+    for(var i=0;i<subj.chapters.length;i++){
+      list.appendChild(renderChapter(subj.chapters[i]));
+    }
+  }
+
+  function renderChapter(chapter){
+    var sheetsDone = 0;
+    for(var i=0;i<chapter.sheets.length;i++){ if(chapter.sheets[i].completed) sheetsDone++; }
+    var doubtCount = 0;
+    for(var i2=0;i2<chapter.sheets.length;i2++){ doubtCount += chapter.sheets[i2].doubtful.length; }
+    var isOpen = !!openChapters[chapter.id];
+
+    var wrap = document.createElement('div');
+    wrap.className = 'chapter' + (isOpen ? ' open' : '');
+
+    var head = document.createElement('div');
+    head.className = 'chapter-head';
+
+    var caret = document.createElement('span');
+    caret.className = 'caret';
+    caret.innerHTML = '&#9656;';
+    head.appendChild(caret);
+
+    var nameEl = document.createElement('span');
+    nameEl.className = 'chapter-name';
+    nameEl.textContent = chapter.name;
+    head.appendChild(nameEl);
+
+    var meta = document.createElement('span');
+    meta.className = 'chapter-meta';
+    var sheetsPill = document.createElement('span');
+    sheetsPill.className = 'pill sheets';
+    sheetsPill.textContent = sheetsDone + '/' + chapter.sheets.length + ' sheets done';
+    meta.appendChild(sheetsPill);
+    if(doubtCount > 0){
+      var doubtPill = document.createElement('span');
+      doubtPill.className = 'pill doubt';
+      doubtPill.textContent = doubtCount + ' doubtful';
+      meta.appendChild(doubtPill);
+    }
+    head.appendChild(meta);
+
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'del-chapter';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      if(delBtn.dataset.confirm === '1'){
+        state[currentSubject].chapters = state[currentSubject].chapters.filter(function(c){ return c.id !== chapter.id; });
+        saveState(); renderAll();
+      } else {
+        delBtn.dataset.confirm = '1';
+        delBtn.textContent = 'Confirm?';
+        delBtn.classList.add('confirming');
+        setTimeout(function(){
+          delBtn.dataset.confirm = '0';
+          delBtn.textContent = 'Delete';
+          delBtn.classList.remove('confirming');
+        }, 2500);
+      }
+    });
+    head.appendChild(delBtn);
+
+    head.addEventListener('click', function(){
+      openChapters[chapter.id] = !openChapters[chapter.id];
+      renderChapters();
+    });
+    wrap.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'chapter-body';
+
+    var addRow = document.createElement('form');
+    addRow.className = 'sheet-add-row';
+    var sheetInput = document.createElement('input');
+    sheetInput.type = 'text';
+    sheetInput.placeholder = 'Sheet name, e.g. Sheet 3';
+    sheetInput.maxLength = 50;
+    sheetInput.autocomplete = 'off';
+    var doneLabel = document.createElement('label');
+    var doneCheck = document.createElement('input');
+    doneCheck.type = 'checkbox';
+    doneLabel.appendChild(doneCheck);
+    doneLabel.appendChild(document.createTextNode('mark done'));
+    var addSheetBtn = document.createElement('button');
+    addSheetBtn.type = 'submit';
+    addSheetBtn.textContent = 'Add sheet';
+    addRow.appendChild(sheetInput);
+    addRow.appendChild(doneLabel);
+    addRow.appendChild(addSheetBtn);
+
+    addRow.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      var val = sheetInput.value.trim();
+      if(!val) return;
+      chapter.sheets.push(newSheet(val, doneCheck.checked));
+      openChapters[chapter.id] = true;
+      saveState(); renderAll();
+    });
+    body.appendChild(addRow);
+
+    if(chapter.sheets.length === 0){
+      var se = document.createElement('div');
+      se.className = 'empty';
+      se.textContent = 'No sheets logged for this chapter yet.';
+      body.appendChild(se);
+    } else {
+      for(var s=0; s<chapter.sheets.length; s++){
+        body.appendChild(renderSheet(chapter, chapter.sheets[s]));
+      }
+    }
+
+    wrap.appendChild(body);
+    return wrap;
+  }
+
+  function renderSheet(chapter, sheet){
+    var isOpen = !!openSheets[sheet.id];
+    var wrap = document.createElement('div');
+    wrap.className = 'sheet' + (isOpen ? ' open' : '');
+
+    var head = document.createElement('div');
+    head.className = 'sheet-head';
+
+    var stamp = document.createElement('button');
+    stamp.type = 'button';
+    stamp.className = 'stamp ' + (sheet.completed ? 'done' : 'pending');
+    stamp.textContent = sheet.completed ? '\u2713 Done' : 'Mark done';
+    stamp.addEventListener('click', function(){
+      sheet.completed = !sheet.completed;
+      saveState(); renderAll();
+    });
+    head.appendChild(stamp);
+
+    var name = document.createElement('span');
+    name.className = 'sheet-name';
+    name.textContent = sheet.name;
+    head.appendChild(name);
+
+    if(sheet.doubtful.length > 0){
+      var dc = document.createElement('span');
+      dc.className = 'sheet-doubt-count';
+      dc.textContent = sheet.doubtful.length + ' doubtful';
+      head.appendChild(dc);
+    }
+
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'sheet-toggle';
+    toggle.textContent = isOpen ? 'Hide' : 'Add / view Qs';
+    toggle.addEventListener('click', function(){
+      openSheets[sheet.id] = !openSheets[sheet.id];
+      renderChapters();
+    });
+    head.appendChild(toggle);
+
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'del-sheet';
+    del.textContent = 'Delete';
+    del.addEventListener('click', function(){
+      if(del.dataset.confirm === '1'){
+        chapter.sheets = chapter.sheets.filter(function(s){ return s.id !== sheet.id; });
+        saveState(); renderAll();
+      } else {
+        del.dataset.confirm = '1';
+        del.textContent = 'Confirm?';
+        del.classList.add('confirming');
+        setTimeout(function(){
+          del.dataset.confirm = '0';
+          del.textContent = 'Delete';
+          del.classList.remove('confirming');
+        }, 2500);
+      }
+    });
+    head.appendChild(del);
+
+    wrap.appendChild(head);
+
+    var bodyEl = document.createElement('div');
+    bodyEl.className = 'sheet-body';
+
+    var chipsWrap = document.createElement('div');
+    chipsWrap.className = 'doubt-chips';
+    if(sheet.doubtful.length === 0){
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.style.padding = '10px 0 0';
+      e.textContent = 'No doubtful questions noted yet.';
+      chipsWrap.appendChild(e);
+    } else {
+      var sorted = sheet.doubtful.slice().sort(function(a,b){ return a.number - b.number; });
+      for(var k=0;k<sorted.length;k++){
+        (function(d){
+          var chip = document.createElement('div');
+          chip.className = 'chip';
+          var qn = document.createElement('span');
+          qn.className = 'qn';
+          qn.textContent = 'Q' + d.number;
+          chip.appendChild(qn);
+          if(d.note){
+            var note = document.createElement('span');
+            note.className = 'note';
+            note.title = d.note;
+            note.textContent = d.note;
+            chip.appendChild(note);
+          }
+          var rm = document.createElement('button');
+          rm.type = 'button';
+          rm.innerHTML = '&times;';
+          rm.title = 'Remove';
+          rm.addEventListener('click', function(){
+            sheet.doubtful = sheet.doubtful.filter(function(x){ return x.id !== d.id; });
+            saveState(); renderAll();
+          });
+          chip.appendChild(rm);
+          chipsWrap.appendChild(chip);
+        })(sorted[k]);
+      }
+    }
+    bodyEl.appendChild(chipsWrap);
+
+    var df = document.createElement('form');
+    df.className = 'doubt-form';
+    var qnInput = document.createElement('input');
+    qnInput.type = 'number';
+    qnInput.min = '1';
+    qnInput.className = 'qnum';
+    qnInput.placeholder = 'Q#';
+    qnInput.required = true;
+    var noteInput = document.createElement('input');
+    noteInput.type = 'text';
+    noteInput.className = 'qnote';
+    noteInput.placeholder = 'Note - why it was tricky (optional)';
+    noteInput.maxLength = 80;
+    var addDoubtBtn = document.createElement('button');
+    addDoubtBtn.type = 'submit';
+    addDoubtBtn.textContent = 'Add doubtful';
+    df.appendChild(qnInput);
+    df.appendChild(noteInput);
+    df.appendChild(addDoubtBtn);
+
+    df.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      var num = parseInt(qnInput.value, 10);
+      if(!num || num < 1) return;
+      sheet.doubtful.push({id: uid(), number: num, note: noteInput.value.trim()});
+      openSheets[sheet.id] = true;
+      saveState(); renderAll();
+    });
+    bodyEl.appendChild(df);
+
+    wrap.appendChild(bodyEl);
+    return wrap;
+  }
+
+  function openDoubtModal(){
+    var subj = state[currentSubject];
+    document.getElementById('modalSubjectName').textContent = 'Doubtful - ' + subjectLabel(currentSubject);
+    var body = document.getElementById('modalBody');
+    body.innerHTML = '';
+
+    var any = false;
+    for(var i=0;i<subj.chapters.length;i++){
+      var chapter = subj.chapters[i];
+      var sheetsWithDoubt = chapter.sheets.filter(function(s){ return s.doubtful.length > 0; });
+      if(sheetsWithDoubt.length === 0) continue;
+      any = true;
+
+      var group = document.createElement('div');
+      group.className = 'modal-group';
+      var h3 = document.createElement('h3');
+      h3.textContent = chapter.name;
+      group.appendChild(h3);
+
+      for(var j=0;j<sheetsWithDoubt.length;j++){
+        var sheet = sheetsWithDoubt[j];
+        var ms = document.createElement('div');
+        ms.className = 'modal-sheet';
+        var sname = document.createElement('div');
+        sname.className = 'sname';
+        sname.textContent = sheet.name;
+        ms.appendChild(sname);
+
+        var chips = document.createElement('div');
+        chips.className = 'doubt-chips';
+        var sorted = sheet.doubtful.slice().sort(function(a,b){ return a.number - b.number; });
+        for(var k=0;k<sorted.length;k++){
+          var d = sorted[k];
+          var chip = document.createElement('div');
+          chip.className = 'chip';
+          var qn = document.createElement('span');
+          qn.className = 'qn';
+          qn.textContent = 'Q' + d.number;
+          chip.appendChild(qn);
+          if(d.note){
+            var note = document.createElement('span');
+            note.className = 'note';
+            note.textContent = d.note;
+            chip.appendChild(note);
+          }
+          chips.appendChild(chip);
+        }
+        ms.appendChild(chips);
+        group.appendChild(ms);
+      }
+
+      body.appendChild(group);
+    }
+
+    if(!any){
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'No doubtful questions logged in ' + subjectLabel(currentSubject) + ' yet.';
+      body.appendChild(e);
+    }
+
+    document.getElementById('doubtOverlay').classList.add('show');
+  }
+
+  function renderAll(){
+    renderSummary();
+    renderTabs();
+    renderChapters();
+  }
+
+  document.getElementById('addChapterForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var input = document.getElementById('newChapterInput');
+    var val = input.value.trim();
+    if(!val) return;
+    state[currentSubject].chapters.push(newChapter(val));
+    input.value = '';
+    saveState(); renderAll();
+  });
+
+  document.getElementById('viewDoubtBtn').addEventListener('click', openDoubtModal);
+  document.getElementById('modalCloseBtn').addEventListener('click', function(){
+    document.getElementById('doubtOverlay').classList.remove('show');
+  });
+  document.getElementById('doubtOverlay').addEventListener('click', function(ev){
+    if(ev.target.id === 'doubtOverlay') ev.currentTarget.classList.remove('show');
+  });
+
+  var resetBtn = document.getElementById('resetBtn');
+  resetBtn.addEventListener('click', function(){
+    if(resetBtn.dataset.confirm === '1'){
+      state = defaultState();
+      saveState(); renderAll();
+      resetBtn.dataset.confirm = '0';
+      resetBtn.textContent = 'Clear all data';
+      resetBtn.classList.remove('confirming');
+    } else {
+      resetBtn.dataset.confirm = '1';
+      resetBtn.textContent = 'Tap again to confirm';
+      resetBtn.classList.add('confirming');
+      setTimeout(function(){
+        resetBtn.dataset.confirm = '0';
+        resetBtn.textContent = 'Clear all data';
+        resetBtn.classList.remove('confirming');
+      }, 3000);
+    }
+  });
+
+  loadState().then(function(){
+    document.getElementById('loadingScreen').style.display = 'none';
+    if(!storageOK){
+      setStatus('Working in this tab only — open this file inside Claude to keep data saved between visits.');
+    }
+    renderAll();
+  });
+})();
+</script>
+</body>
+</html>
